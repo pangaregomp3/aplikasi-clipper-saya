@@ -24,17 +24,18 @@ if st.button("🚀 Unduh, Analisis & Potong"):
     genai.configure(api_key=api_key)
     video_path = "temp_video.mp4"
 
-    # Menghapus file lama jika ada agar memori server tidak penuh
+    # Menghapus file lama jika ada
     if os.path.exists(video_path):
         os.remove(video_path)
 
-    # Langkah 1: Unduh File (Format Paling Bebas / Fleksibel)
-    with st.spinner("⏳ 1/4 Mengunduh video (Mencari format terbaik yang tersedia)..."):
+    # Langkah 1: Unduh File (Otomatis menggabungkan video & audio jika dipisah YouTube)
+    with st.spinner("⏳ 1/4 Mengunduh video (Proses ini mungkin memakan waktu sebentar)..."):
         try:
-            # Aturan dilonggarkan menjadi 'best' saja tanpa memaksa ekstensi mp4
+            # Kombinasi ini sangat tangguh untuk melewati batasan format YouTube
             ydl_opts = {
-                'format': 'best', 
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
                 'outtmpl': video_path,
+                'merge_output_format': 'mp4',
                 'quiet': True,
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -44,13 +45,13 @@ if st.button("🚀 Unduh, Analisis & Potong"):
                 st.error("Video gagal tersimpan di server.")
                 st.stop()
                 
-            st.success("Video berhasil diunduh dengan utuh!")
+            st.success("Video berhasil diunduh dan disatukan!")
         except Exception as e:
-            st.error(f"Gagal mengunduh video. Pastikan tautan valid. Detail: {e}")
+            st.error(f"Gagal mengunduh video. Detail: {e}")
             st.stop()
 
     # Langkah 2: Proses Suara (Whisper)
-    with st.spinner("🎙️ 2/4 Memproses audio menggunakan Whisper (Bisa memakan waktu 1-3 menit)..."):
+    with st.spinner("🎙️ 2/4 Membaca suara menggunakan AI Whisper (Bisa memakan waktu 1-3 menit)..."):
         try:
             model = whisper.load_model("base")
             result = model.transcribe(video_path)
@@ -60,7 +61,7 @@ if st.button("🚀 Unduh, Analisis & Potong"):
             st.stop()
 
     # Langkah 3: Analisis AI Gemini
-    with st.spinner("🧠 3/4 Menganalisis skor viralitas dengan AI Gemini..."):
+    with st.spinner("🧠 3/4 Menganalisis poin viralitas dengan AI Gemini..."):
         prompt = f"""
         Analisis transkrip video berikut beserta timestamp (detik):
         {json.dumps(segments)}
@@ -80,7 +81,7 @@ if st.button("🚀 Unduh, Analisis & Potong"):
             raw_json = response.text.strip().replace("```json", "").replace("```", "").strip()
             clips_data = json.loads(raw_json)
         except Exception as e:
-            st.error("AI gagal memproses data (mungkin kuota akses API Anda terkunci sebentar). Coba klik tombol lagi.")
+            st.error("AI Gemini gagal merespons format. Silakan klik tombol 'Unduh' lagi.")
             st.stop()
 
     st.subheader("🔥 Hasil Deteksi Klip")
@@ -91,7 +92,7 @@ if st.button("🚀 Unduh, Analisis & Potong"):
         st.write(f"⏱️ **Durasi:** {clip['start']}s - {clip['end']}s | 💡 **Alasan:** {clip['reason']}")
         output_clip_path = f"viral_clip_{idx+1}.mp4"
 
-        with st.spinner(f"✂️ 4/4 Memotong Klip {idx+1} ke format TikTok/Reels (9:16)..."):
+        with st.spinner(f"✂️ 4/4 Memotong Klip {idx+1} ke rasio 9:16 (TikTok/Reels)..."):
             try:
                 video_clip = VideoFileClip(video_path).subclip(clip["start"], clip["end"])
                 
