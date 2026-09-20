@@ -24,15 +24,16 @@ if st.button("🚀 Unduh, Analisis & Potong"):
     genai.configure(api_key=api_key)
     video_path = "temp_video.mp4"
 
-    # Menghapus file lama jika ada agar penyimpanan server tidak penuh
+    # Menghapus file lama jika ada agar memori server tidak penuh
     if os.path.exists(video_path):
         os.remove(video_path)
 
-    # Langkah 1: Unduh File (Format utuh, tanpa proses merge)
-    with st.spinner("⏳ 1/4 Mengunduh video (mengambil kualitas optimal tanpa merge)..."):
+    # Langkah 1: Unduh File (Format Paling Bebas / Fleksibel)
+    with st.spinner("⏳ 1/4 Mengunduh video (Mencari format terbaik yang tersedia)..."):
         try:
+            # Aturan dilonggarkan menjadi 'best' saja tanpa memaksa ekstensi mp4
             ydl_opts = {
-                'format': 'best[ext=mp4]/best', 
+                'format': 'best', 
                 'outtmpl': video_path,
                 'quiet': True,
             }
