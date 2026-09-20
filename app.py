@@ -27,25 +27,26 @@ if st.button("🚀 Unduh, Analisis & Potong"):
     if os.path.exists(video_path):
         os.remove(video_path)
 
-    # Langkah 1: Unduh File (Dibatasi 480p agar RAM server gratisan tidak penuh)
-    with st.spinner("⏳ 1/4 Mengunduh video (Membatasi resolusi agar memori aman)..."):
+    # Langkah 1: Unduh File (Dengan trik penyamaran Android)
+    with st.spinner("⏳ 1/4 Mengunduh video (Menyamar sebagai perangkat seluler)..."):
         try:
             ydl_opts = {
                 'format': 'best[height<=480]/bestvideo[height<=480]+bestaudio/best',
                 'outtmpl': video_path,
                 'merge_output_format': 'mp4',
                 'quiet': True,
-                'nocheckcertificate': True
+                'nocheckcertificate': True,
+                # Trik khusus: Menyamar sebagai aplikasi Android agar tidak diblokir YouTube (403)
+                'extractor_args': {'youtube': ['player_client=android']}
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([youtube_url])
             
-            # Memeriksa apakah file benar-benar terisi (bukan 0 byte)
             if not os.path.exists(video_path) or os.path.getsize(video_path) == 0:
-                st.error("File yang diunduh kosong. Durasi video kemungkinan terlalu besar untuk kapasitas memori server gratis ini.")
+                st.error("File kosong. YouTube mungkin memblokir akses ke video ini secara ketat.")
                 st.stop()
                 
-            st.success("Video berhasil diunduh dengan ukuran aman!")
+            st.success("Video berhasil diunduh dengan aman!")
         except Exception as e:
             st.error(f"Gagal mengunduh video. Detail: {e}")
             st.stop()
