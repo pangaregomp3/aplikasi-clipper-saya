@@ -24,34 +24,34 @@ if st.button("🚀 Unduh, Analisis & Potong"):
     genai.configure(api_key=api_key)
     video_path = "temp_video.mp4"
 
-    # Menghapus file lama jika ada
     if os.path.exists(video_path):
         os.remove(video_path)
 
-    # Langkah 1: Unduh File (Otomatis menggabungkan video & audio jika dipisah YouTube)
-    with st.spinner("⏳ 1/4 Mengunduh video (Proses ini mungkin memakan waktu sebentar)..."):
+    # Langkah 1: Unduh File (Dibatasi 480p agar RAM server gratisan tidak penuh)
+    with st.spinner("⏳ 1/4 Mengunduh video (Membatasi resolusi agar memori aman)..."):
         try:
-            # Kombinasi ini sangat tangguh untuk melewati batasan format YouTube
             ydl_opts = {
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'format': 'best[height<=480]/bestvideo[height<=480]+bestaudio/best',
                 'outtmpl': video_path,
                 'merge_output_format': 'mp4',
                 'quiet': True,
+                'nocheckcertificate': True
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([youtube_url])
             
-            if not os.path.exists(video_path):
-                st.error("Video gagal tersimpan di server.")
+            # Memeriksa apakah file benar-benar terisi (bukan 0 byte)
+            if not os.path.exists(video_path) or os.path.getsize(video_path) == 0:
+                st.error("File yang diunduh kosong. Durasi video kemungkinan terlalu besar untuk kapasitas memori server gratis ini.")
                 st.stop()
                 
-            st.success("Video berhasil diunduh dan disatukan!")
+            st.success("Video berhasil diunduh dengan ukuran aman!")
         except Exception as e:
             st.error(f"Gagal mengunduh video. Detail: {e}")
             st.stop()
 
     # Langkah 2: Proses Suara (Whisper)
-    with st.spinner("🎙️ 2/4 Membaca suara menggunakan AI Whisper (Bisa memakan waktu 1-3 menit)..."):
+    with st.spinner("🎙️ 2/4 Membaca suara menggunakan AI Whisper..."):
         try:
             model = whisper.load_model("base")
             result = model.transcribe(video_path)
@@ -81,7 +81,7 @@ if st.button("🚀 Unduh, Analisis & Potong"):
             raw_json = response.text.strip().replace("```json", "").replace("```", "").strip()
             clips_data = json.loads(raw_json)
         except Exception as e:
-            st.error("AI Gemini gagal merespons format. Silakan klik tombol 'Unduh' lagi.")
+            st.error("AI Gemini gagal memproses format. Silakan klik tombol kembali.")
             st.stop()
 
     st.subheader("🔥 Hasil Deteksi Klip")
