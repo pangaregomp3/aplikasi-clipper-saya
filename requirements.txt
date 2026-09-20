@@ -1,4 +1,4 @@
 streamlit
 openai-whisper
 google-generativeai
-moviepy
+moviepy==1.0.3
